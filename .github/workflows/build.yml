@@ -1,0 +1,38 @@
+name: Build ZAVIRA for InfinityFree
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'zavira-source.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Extract ZAVIRA source
+        run: |
+          mkdir site
+          unzip -q zavira-source.zip -d site
+          test -f site/package.json
+      - name: Install dependencies
+        working-directory: site
+        run: npm install --no-audit --no-fund
+      - name: Build website
+        working-directory: site
+        run: npm run build
+      - name: Verify static output
+        run: |
+          test -f site/dist/index.html
+          echo 'ZAVIRA build completed. Upload the CONTENTS of dist to InfinityFree htdocs.'
+      - name: Upload InfinityFree website files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVIRA-InfinityFree-dist
+          path: site/dist/
+          if-no-files-found: error
